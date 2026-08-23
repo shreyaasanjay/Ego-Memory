@@ -1,17 +1,17 @@
 # EgoMemory
 
-EgoMemory is a multimodal episodic-memory system for retrieving relevant moments from first-person cooking recordings. It tests whether visual, temporal, audio, and wearable-sensor signals improve retrieval over vision alone.
+EgoMemory is a multimodal episodic-memory system for retrieving relevant moments from video recordings. It tests whether visual, temporal, audio, and wearable-sensor signals improve retrieval over vision alone.
 
 ## Project question
 
 **How much does each added modality improve event retrieval from egocentric experience?**
 
-Given a question such as *“What happened immediately before I put the pan on the stove?”*, EgoMemory searches timestamped memory windows and returns the most relevant moments.
+Given a question such as *“What happened immediately before I put the pan on the stove?”*, EgoMemory searches timestamped memory windows and returns the most relevant moments. Cooking is the demonstration domain—not a system limitation.
 
 ## Architecture
 
 ```text
-Ego-Exo4D cooking take
+Time-aligned video recording
   ├─ ego video ──────── visual embeddings ─┐
   ├─ audio ──────────── audio features ────┤
   ├─ IMU / trajectory ─ motion/location ───┤
@@ -52,7 +52,34 @@ python scripts/run_smoke_test.py
 pytest
 ```
 
-## Download exactly one cooking take
+## Local demo
+
+After building the selected take's index, launch the lightweight demo:
+
+```powershell
+pip install -e ".[ui]"
+python -m streamlit run app.py
+```
+
+On Windows, from the project folder you can instead run `run_demo.cmd`.
+
+### Native desktop demo
+
+For a local desktop window instead of the browser UI, run `run_desktop.cmd` from the project folder. It includes embedded playback of the selected retrieved window, modality scores, and the aligned transcript.
+
+## Fixed-weight ablation results
+
+Run the experiment with `python scripts/run_ablation.py`. It evaluates the labeled query set under vision, audio-transcript, motion, pairwise, and full-multimodal configurations. Outputs are written to `results/ablation/`; the desktop app displays the summary table. These results use predetermined, normalized modality weights—no per-query tuning.
+
+To reproduce the balanced 50-query provisional run:
+
+```powershell
+python scripts/run_ablation.py --queries configs/evaluation_queries_50_provisional.json --output results/ablation_50_provisional
+```
+
+It lets you enter a question, select a retrieved event, play the ego video from that timestamp, and inspect the visual, audio-transcript, and motion evidence used for ranking.
+
+## Download one Ego-Exo4D demonstration take
 
 Ego-Exo4D access credentials are separate from AWS promotional credits. Configure only the access key issued with the dataset license; it is stored under your user profile, never in this repository.
 
@@ -88,6 +115,31 @@ Evaluate the same approximately 30 labeled queries using these configurations:
 | Full | visual, temporal, audio, trajectory/IMU features |
 
 Report Recall@5 and temporal localization error. Do not make up results: populate the results table only after the selected cooking take and query labels have been processed.
+
+### Current balanced 50-query development run
+
+This repository contains 10 vision, 10 audio, 10 motion, 10 vision+audio, and 10 full-multimodal prompts. The audio labels are grounded in the official timestamped transcription. The remaining labels are clearly marked **provisional** pending visual review.
+
+| System | Recall@5 | Avg. temporal error |
+| --- | ---: | ---: |
+| Vision | 30.0% | 141.8 s |
+| Audio/transcript | 74.0% | 39.0 s |
+| Motion | 18.0% | 173.5 s |
+| Vision + audio | 70.0% | 103.7 s |
+| Full multimodal | 72.0% | 115.0 s |
+
+These are development results, not final research claims. Re-label the provisional events after visual review, then rerun the experiment.
+
+## Beyond cooking
+
+EgoMemory's retrieval design works for any timestamped video archive: wearable-camera footage, meetings, lectures, sports practice, maintenance videos, travel footage, laboratory sessions, or security video.
+
+- **Vision:** video frames sampled into time windows.
+- **Audio:** soundtrack and/or timestamped transcription.
+- **Time:** timestamps and neighboring event windows.
+- **Motion/spatial context:** optional IMU, GPS, camera trajectory, or location metadata.
+
+Sources without sensor data still work as video + audio + temporal retrieval systems; motion simply becomes unavailable rather than required.
 
 ## Repository layout
 

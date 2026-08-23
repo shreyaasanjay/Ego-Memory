@@ -1,0 +1,100 @@
+[
+  {
+    "query_id": "q01",
+    "query": "When did I first touch the boiling pan on the stove with my towel?",
+    "start_time": 2.0,
+    "end_time": 6.0,
+    "modality": "vision",
+    "label_source": "user visual review",
+    "needs_visual_verification": true
+  },
+  {
+    "query_id": "q02",
+    "query": "When did I touch the boiling noodles with my fingers?",
+    "start_time": 60.0,
+    "end_time": 64.0,
+    "modality": "vision",
+    "label_source": "user visual review",
+    "needs_visual_verification": true
+  },
+  {
+    "query_id": "q03",
+    "query": "When did I say that mung bean vermicelli cooks quickly after it boils?",
+    "start_time": 0.8,
+    "end_time": 7.6,
+    "modality": "audio",
+    "label_source": "official transcription"
+  },
+  {
+    "query_id": "q04",
+    "query": "When did I describe the noodles as jelly-like?",
+    "start_time": 19.6,
+    "end_time": 24.5,
+    "modality": "audio",
+    "label_source": "official transcription"
+  },
+  {
+    "query_id": "q05",
+    "query": "When did I say to drain the noodles?",
+    "start_time": 72.3,
+    "end_time": 75.1,
+    "modality": "audio",
+    "label_source": "official transcription"
+  },
+  {
+    "query_id": "q06",
+    "query": "When did I say the noodles would go into the water?",
+    "start_time": 92.8,
+    "end_time": 98.0,
+    "modality": "audio",
+    "label_source": "official transcription"
+  },
+  {
+    "query_id": "q07",
+    "query": "When did I announce that I was going to chop garlic?",
+    "start_time": 173.8,
+    "end_time": 174.9,
+    "modality": "audio",
+    "label_source": "official transcription"
+  },
+  {
+    "query_id": "q08",
+    "query": "When did I explain that the heat of garlic comes from its germ?",
+    "start_time": 211.4,
+    "end_time": 214.8,
+    "modality": "audio",
+    "label_source": "official transcription"
+  },
+  {
+    "query_id": "q09",
+    "query": "When did I say to add scallion for some green?",
+    "start_time": 237.5,
+    "end_time": 240.9,
+    "modality": "audio",
+    "label_source": "official transcription"
+  },
+  {
+    "query_id": "q10",
+    "query": "When did I add a small amount of sesame oil?",
+    "start_time": 322.9,
+    "end_time": 329.1,
+    "modality": "multimodal",
+    "label_source": "official transcription"
+  },
+  {
+    "query_id": "q11",
+    "query": "When did I explain that shaking the pan cools it down?",
+    "start_time": 346.6,
+    "end_time": 353.5,
+    "modality": "audio_motion",
+    "label_source": "official transcription"
+  },
+  {
+    "query_id": "q12",
+    "query": "When did I say I was ready to add the rest to the pan?",
+    "start_time": 357.1,
+    "end_time": 361.8,
+    "modality": "audio",
+    "label_source": "official transcription"
+  }
+]

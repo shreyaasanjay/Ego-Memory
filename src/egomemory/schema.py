@@ -11,6 +11,7 @@ class MemoryEvent:
     end_time: float
     narration: str = ""
     visual_embedding: list[float] = field(default_factory=list)
+    text_embedding: list[float] = field(default_factory=list)
     audio_features: dict[str, float] = field(default_factory=dict)
     motion_features: dict[str, float] = field(default_factory=dict)
     location: str | None = None
