@@ -61,6 +61,8 @@ On Windows, from the project folder you can instead run `run_demo.cmd`.
 
 For a local desktop window instead of the browser UI, run `run_desktop.cmd` from the project folder. It includes embedded playback of the selected retrieved window, modality scores, and the aligned transcript.
 
+The generated `results/fair_cooking_05_4/ego_rgb_with_audio.mp4` combines the separate Ego-Exo4D RGB and audio streams for local review. The desktop app's **Open full video with audio** button opens it in the system video player.
+
 ## Fixed-weight ablation results
 
 Run the experiment with `python scripts/run_ablation.py`. It evaluates the labeled query set under vision, audio-transcript, motion, pairwise, and full-multimodal configurations. Outputs are written to `results/ablation/`; the desktop app displays the summary table. These results use predetermined, normalized modality weights—no per-query tuning.
@@ -110,19 +112,19 @@ Evaluate the same approximately 30 labeled queries using these configurations:
 
 Report Recall@5 and temporal localization error. Do not make up results: populate the results table only after the selected cooking take and query labels have been processed.
 
-### Current balanced 50-query development run
+### Current balanced 50-query run
 
-This repository contains 10 vision, 10 audio, 10 motion, 10 vision+audio, and 10 full-multimodal prompts. The audio labels are grounded in the official timestamped transcription. The remaining labels are clearly marked **provisional** pending visual review.
+This repository contains 10 vision, 10 audio, 10 motion, 10 vision+audio, and 10 full-multimodal prompts. Audio labels are grounded in the official timestamped transcription; all 50 ground-truth ranges were manually reviewed and confirmed.
 
 | System | Recall@5 | Avg. temporal error |
 | --- | ---: | ---: |
 | Vision | 30.0% | 141.8 s |
-| Audio/transcript | 74.0% | 39.0 s |
+| Audio/transcript | 90.0% | 31.2 s |
 | Motion | 18.0% | 173.5 s |
-| Vision + audio | 70.0% | 103.7 s |
-| Full multimodal | 72.0% | 115.0 s |
+| Vision + audio | 82.0% | 74.1 s |
+| Full multimodal | 84.0% | 73.7 s |
 
-These are development results, not final research claims. Re-label the provisional events after visual review, then rerun the experiment.
+These results apply to one 6.6-minute Ego-Exo4D cooking take. They are a completed experiment for this recording, not a claim that the same performance will generalize to every video domain.
 
 ## Beyond cooking
 

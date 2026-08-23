@@ -13,7 +13,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-media = ["opencv-python>=4.10", "librosa>=0.10", "soundfile>=0.12"]
+media = ["opencv-python>=4.10", "librosa>=0.10", "soundfile>=0.12", "imageio-ffmpeg>=0.5"]
 models = ["torch>=2.3", "torchvision>=0.18", "transformers>=4.45", "sentence-transformers>=3.0"]
 dev = ["pytest>=8.0", "ruff>=0.6"]
 ui = ["streamlit>=1.38"]

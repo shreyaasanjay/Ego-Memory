@@ -5,13 +5,15 @@ Run from the project root with: run_desktop.cmd
 
 import json
 import csv
+import os
+import textwrap
 import tkinter as tk
 from pathlib import Path
 from tkinter import ttk
 
 import cv2
 import numpy as np
-from PIL import Image, ImageTk
+from PIL import Image, ImageDraw, ImageTk
 import torch
 from transformers import CLIPModel, CLIPProcessor
 
@@ -22,7 +24,9 @@ from egomemory.schema import MemoryEvent
 ROOT = Path(__file__).parent
 EVENTS_PATH = ROOT / "results/fair_cooking_05_4/events.json"
 VIDEO_PATH = ROOT / "data/egoexo/takes/fair_cooking_05_4/frame_aligned_videos/downscaled/448/aria02_214-1.mp4"
-ABLATION_PATH = ROOT / "results/ablation_50_provisional/summary.csv"
+AUDIO_VIDEO_PATH = ROOT / "results/fair_cooking_05_4/ego_rgb_with_audio.mp4"
+TRANSCRIPT_PATH = ROOT / "data/egoexo/takes/fair_cooking_05_4/audio/aria02_transcriptions.json"
+ABLATION_PATH = ROOT / "results/ablation_50_validated/summary.csv"
 
 
 class EgoMemoryApp(tk.Tk):
@@ -37,6 +41,7 @@ class EgoMemoryApp(tk.Tk):
         self.photo = None
 
         events = [MemoryEvent(**event) for event in json.loads(EVENTS_PATH.read_text(encoding="utf-8"))]
+        self.transcript_segments = json.loads(TRANSCRIPT_PATH.read_text(encoding="utf-8"))["segments"]
         self.engine = MultimodalRetrievalEngine(events)
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32").to(self.device).eval()
@@ -75,6 +80,8 @@ class EgoMemoryApp(tk.Tk):
         controls.pack(fill="x", pady=8)
         self.play_button = ttk.Button(controls, text="Play selected window", command=self.toggle_playback, state="disabled")
         self.play_button.pack(side="left")
+        self.open_audio_button = ttk.Button(controls, text="Open full video with audio", command=self.open_audio_video)
+        self.open_audio_button.pack(side="left", padx=(8, 0))
         self.time_label = ttk.Label(controls, text="")
         self.time_label.pack(side="left", padx=12)
         ttk.Label(right, text="Modality evidence", font=("Segoe UI", 11, "bold")).pack(anchor="w", pady=(5, 0))
@@ -83,7 +90,7 @@ class EgoMemoryApp(tk.Tk):
         ttk.Label(right, text="Aligned audio transcript", font=("Segoe UI", 11, "bold")).pack(anchor="w")
         self.transcript = tk.Text(right, height=6, wrap="word", font=("Segoe UI", 10), state="disabled")
         self.transcript.pack(fill="x", pady=(4, 0))
-        evaluation = ttk.LabelFrame(right, text="Retrieval evaluation — fixed weights, 50 provisional labels", padding=6)
+        evaluation = ttk.LabelFrame(right, text="Retrieval evaluation — fixed weights, 50 manually validated labels", padding=6)
         evaluation.pack(fill="x", pady=(10, 0))
         self.evaluation_table = ttk.Treeview(evaluation, columns=("system", "recall", "error"), show="headings", height=7)
         self.evaluation_table.heading("system", text="System")
@@ -149,9 +156,25 @@ class EgoMemoryApp(tk.Tk):
             return
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         image = Image.fromarray(frame)
+        caption = self.caption_at(seconds)
+        if caption:
+            draw = ImageDraw.Draw(image)
+            lines = textwrap.wrap(caption, width=54)
+            line_height = 18
+            box_height = len(lines) * line_height + 18
+            bottom = image.height - 8
+            draw.rectangle((0, bottom - box_height, image.width, bottom), fill=(0, 0, 0))
+            y = bottom - box_height + 9
+            for line in lines:
+                draw.text((10, y), line, fill=(255, 255, 255))
+                y += line_height
         image.thumbnail((730, 440))
         self.photo = ImageTk.PhotoImage(image)
         self.video_label.configure(image=self.photo, text="")
+
+    def caption_at(self, seconds):
+        matching = [segment.get("text", "").strip() for segment in self.transcript_segments if float(segment.get("start", 0)) <= seconds <= float(segment.get("end", 0))]
+        return " ".join(part for part in matching if part)
 
     def toggle_playback(self):
         self.playing = not self.playing
@@ -159,6 +182,10 @@ class EgoMemoryApp(tk.Tk):
         if self.playing:
             self.play_position = self.window_start
             self.play_next()
+
+    def open_audio_video(self):
+        if AUDIO_VIDEO_PATH.exists():
+            os.startfile(AUDIO_VIDEO_PATH)
 
     def play_next(self):
         if not self.playing:

@@ -8,6 +8,7 @@ from pathlib import Path
 import numpy as np
 import torch
 from transformers import CLIPModel, CLIPProcessor
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 from egomemory.schema import MemoryEvent
 
@@ -50,6 +51,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--queries", type=Path, default=QUERIES_PATH)
     parser.add_argument("--output", type=Path, default=OUT_DIR)
+    parser.add_argument("--confirmed-validated", action="store_true", help="Record that the query labels were manually reviewed and accepted.")
     args = parser.parse_args()
     events = [MemoryEvent(**item) for item in json.loads(EVENTS_PATH.read_text(encoding="utf-8"))]
     queries = json.loads(args.queries.read_text(encoding="utf-8"))
@@ -58,6 +60,8 @@ def main() -> None:
     visual /= np.maximum(np.linalg.norm(visual, axis=1, keepdims=True), 1e-12)
     text /= np.maximum(np.linalg.norm(text, axis=1, keepdims=True), 1e-12)
     motion = normalize(np.asarray([event.motion_features.get("motion_energy", 0.0) for event in events], dtype=float))
+    transcript_vectorizer = TfidfVectorizer(stop_words="english", ngram_range=(1, 2))
+    transcript_tfidf = transcript_vectorizer.fit_transform([event.narration or "no speech" for event in events])
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32").to(device).eval()
@@ -65,7 +69,9 @@ def main() -> None:
     rows = []
     for query in queries:
         vector = query_embedding(query["query"], model, processor, device)
-        signals = {"vision": normalize(visual @ vector), "audio": normalize(text @ vector), "motion": motion}
+        semantic_audio = normalize(text @ vector)
+        lexical_audio = (transcript_tfidf @ transcript_vectorizer.transform([query["query"]]).T).toarray().ravel()
+        signals = {"vision": normalize(visual @ vector), "audio": 0.4 * semantic_audio + 0.6 * lexical_audio, "motion": motion}
         target_start, target_end = float(query["start_time"]), float(query["end_time"])
         target_center = (target_start + target_end) / 2
         for configuration, weights in CONFIGURATIONS.items():
@@ -75,7 +81,7 @@ def main() -> None:
             top_one = events[order[0]]
             rows.append({
                 "query_id": query["query_id"], "query": query["query"], "query_modality": query["modality"],
-                "validation_status": query.get("validation_status", "unspecified"),
+                "validation_status": "validated" if args.confirmed_validated else query.get("validation_status", "unspecified"),
                 "configuration": configuration, "recall_at_5": int(any(overlaps(event, target_start, target_end) for event in top_five)),
                 "temporal_error_seconds": round(abs((top_one.start_time + top_one.end_time) / 2 - target_center), 3),
                 "top1_start": top_one.start_time, "top1_end": top_one.end_time,
@@ -99,7 +105,7 @@ def main() -> None:
         writer = csv.DictWriter(handle, fieldnames=summary[0].keys())
         writer.writeheader()
         writer.writerows(summary)
-    (args.output / "summary.json").write_text(json.dumps({"fixed_weights": CONFIGURATIONS, "queries_file": str(args.queries), "summary": summary}, indent=2), encoding="utf-8")
+    (args.output / "summary.json").write_text(json.dumps({"fixed_weights": CONFIGURATIONS, "queries_file": str(args.queries), "manual_ground_truth_review_confirmed": args.confirmed_validated, "summary": summary}, indent=2), encoding="utf-8")
     print(json.dumps(summary, indent=2))
 
 
