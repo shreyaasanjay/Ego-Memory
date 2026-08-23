@@ -31,7 +31,6 @@ Time-aligned video recording
 - A FAISS visual index with an automatic NumPy fallback.
 - Temporal, location, audio-activity, and motion-feature reranking hooks.
 - Recall@K and temporal-localization-error metrics.
-- A data-free smoke test to verify retrieval plumbing before downloading data.
 
 ## Setup
 
