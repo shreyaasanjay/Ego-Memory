@@ -45,12 +45,6 @@ pip install -e ".[media,models,dev]"
 pip install ego4d awscli
 ```
 
-Run the data-free verification:
-
-```powershell
-python scripts/run_smoke_test.py
-pytest
-```
 
 ## Download exactly one cooking take
 
