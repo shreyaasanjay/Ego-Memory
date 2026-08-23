@@ -1,0 +1,11 @@
+# Paths are relative to the repository root. Keep raw data out of Git.
+data_dir: data
+results_dir: results
+window_seconds: 8.0
+stride_seconds: 4.0
+top_k: 5
+weights:
+  vision: 0.65
+  audio: 0.10
+  temporal: 0.15
+  spatial: 0.10
