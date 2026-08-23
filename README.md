@@ -6,7 +6,7 @@ EgoMemory is a multimodal episodic-memory system for retrieving relevant moments
 
 **How much does each added modality improve event retrieval from egocentric experience?**
 
-Given a question such as *“What happened immediately before I put the pan on the stove?”*, EgoMemory searches timestamped memory windows and returns the most relevant moments. Cooking is the demonstration domain—not a system limitation.
+For this experiment, I used a cooking video since it contains a wide range of modalities (Audio, Video, Motion, etc). Given a question such as *“What happened immediately before I put the pan on the stove?”*, EgoMemory searches timestamped memory windows and returns the most relevant moments. 
 
 ## Architecture
 
@@ -101,7 +101,7 @@ python scripts/inspect_take.py data/egoexo/<TAKE_DIRECTORY>
 
 ## Experiment
 
-Evaluate the same approximately 30 labeled queries using these configurations:
+Evaluate the same approximately 50 labeled queries using these configurations:
 
 | System | Signals |
 | --- | --- |
@@ -152,7 +152,7 @@ results/           # ignored generated experiment artifacts
 
 ## Limitations
 
-This initial version is intentionally a retrieval baseline, not a custom trained model or real-time system. Audio and sensor signals must be evaluated only where the selected take actually supplies synchronized recordings. Dataset-license restrictions also mean raw data cannot be committed to this repository.
+This initial version is intentionally a retrieval baseline, not a custom trained model or real-time system. Audio and sensor signals must be evaluated manually only where the selected take actually supplies synchronized recordings. Dataset-license restrictions also mean raw data cannot be committed to this repository.
 
 ## Sources
 
