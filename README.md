@@ -63,6 +63,21 @@ For a local desktop window instead of the browser UI, run `run_desktop.cmd` from
 
 The generated `results/fair_cooking_05_4/ego_rgb_with_audio.mp4` combines the separate Ego-Exo4D RGB and audio streams for local review. The desktop app's **Open full video with audio** button opens it in the system video player.
 
+## Example retrieval demo
+
+The desktop app demonstrates a complete memory lookup with this question:
+
+> **“When did I explain that shaking the pan cools it down while shaking the pan?”**
+
+It retrieves the top memory window at **348–356 seconds**. The result overlaps the manually validated ground-truth range (**346–354 seconds**) and presents:
+
+- the first-person video window;
+- a time-aligned spoken caption;
+- visual/FAISS, audio-transcript, and motion/trajectory evidence; and
+- a ground-truth overlap indicator.
+
+The screen recording is intentionally not bundled with this repository because it contains restricted Ego-Exo4D media. For a public portfolio or GitHub demo, use an equivalent recording made from your own or otherwise redistributable video.
+
 ## Fixed-weight ablation results
 
 Run the experiment with `python scripts/run_ablation.py`. It evaluates the labeled query set under vision, audio-transcript, motion, pairwise, and full-multimodal configurations. Outputs are written to `results/ablation/`; the desktop app displays the summary table. These results use predetermined, normalized modality weights—no per-query tuning.
@@ -136,6 +151,16 @@ EgoMemory's retrieval design works for any timestamped video archive: wearable-c
 - **Motion/spatial context:** optional IMU, GPS, camera trajectory, or location metadata.
 
 Sources without sensor data still work as video + audio + temporal retrieval systems; motion simply becomes unavailable rather than required.
+
+### Scaling to many videos
+
+EgoMemory can index multiple recordings by storing each event with a `video_id`, source path, start/end time, and modality features. Retrieval can then either search a single selected video or a global index across all videos.
+
+```text
+video catalog → per-video event windows → shared vector index → top memories
+```
+
+For a larger collection, keep raw videos in private storage, store lightweight event metadata and embeddings separately, and return both the matching `video_id` and timestamp. This makes the same interaction work for a personal video archive, meetings, lectures, sports practice, or wearable-camera recordings.
 
 ## Repository layout
 

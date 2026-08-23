@@ -7,6 +7,7 @@ import json
 import csv
 import os
 import textwrap
+from difflib import SequenceMatcher
 import tkinter as tk
 from pathlib import Path
 from tkinter import ttk
@@ -26,6 +27,7 @@ EVENTS_PATH = ROOT / "results/fair_cooking_05_4/events.json"
 VIDEO_PATH = ROOT / "data/egoexo/takes/fair_cooking_05_4/frame_aligned_videos/downscaled/448/aria02_214-1.mp4"
 AUDIO_VIDEO_PATH = ROOT / "results/fair_cooking_05_4/ego_rgb_with_audio.mp4"
 TRANSCRIPT_PATH = ROOT / "data/egoexo/takes/fair_cooking_05_4/audio/aria02_transcriptions.json"
+GROUND_TRUTH_PATH = ROOT / "configs/evaluation_queries_50_provisional.json"
 ABLATION_PATH = ROOT / "results/ablation_50_validated/summary.csv"
 
 
@@ -42,6 +44,7 @@ class EgoMemoryApp(tk.Tk):
 
         events = [MemoryEvent(**event) for event in json.loads(EVENTS_PATH.read_text(encoding="utf-8"))]
         self.transcript_segments = json.loads(TRANSCRIPT_PATH.read_text(encoding="utf-8"))["segments"]
+        self.ground_truth = json.loads(GROUND_TRUTH_PATH.read_text(encoding="utf-8"))
         self.engine = MultimodalRetrievalEngine(events)
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32").to(self.device).eval()
@@ -76,6 +79,8 @@ class EgoMemoryApp(tk.Tk):
 
         self.video_label = ttk.Label(right, text="Search to see a video preview", anchor="center")
         self.video_label.pack(fill="both", expand=True)
+        self.live_caption = tk.StringVar(value="Live time-aligned caption will appear here during playback.")
+        ttk.Label(right, textvariable=self.live_caption, wraplength=700, justify="left", foreground="#0b4f6c").pack(fill="x", pady=(4, 0))
         controls = ttk.Frame(right)
         controls.pack(fill="x", pady=8)
         self.play_button = ttk.Button(controls, text="Play selected window", command=self.toggle_playback, state="disabled")
@@ -87,6 +92,8 @@ class EgoMemoryApp(tk.Tk):
         ttk.Label(right, text="Modality evidence", font=("Segoe UI", 11, "bold")).pack(anchor="w", pady=(5, 0))
         self.evidence = ttk.Label(right, text="", justify="left", font=("Segoe UI", 10))
         self.evidence.pack(anchor="w", fill="x", pady=(4, 8))
+        self.ground_truth_label = ttk.Label(right, text="Ground-truth comparison appears for a labeled query.", justify="left", font=("Segoe UI", 10, "bold"))
+        self.ground_truth_label.pack(anchor="w", fill="x", pady=(0, 8))
         ttk.Label(right, text="Aligned audio transcript", font=("Segoe UI", 11, "bold")).pack(anchor="w")
         self.transcript = tk.Text(right, height=6, wrap="word", font=("Segoe UI", 10), state="disabled")
         self.transcript.pack(fill="x", pady=(4, 0))
@@ -146,6 +153,16 @@ class EgoMemoryApp(tk.Tk):
         self.transcript.delete("1.0", tk.END)
         self.transcript.insert("1.0", event.narration or "No spoken transcript overlaps this window.")
         self.transcript.configure(state="disabled")
+        label = self.find_ground_truth(self.query.get())
+        if label:
+            correct = event.end_time >= float(label["start_time"]) and event.start_time <= float(label["end_time"])
+            status = "✓ Selected memory overlaps the validated ground truth" if correct else "✗ Selected memory does not overlap the ground truth"
+            self.ground_truth_label.configure(
+                text=f"Ground truth: {label['start_time']:.1f}–{label['end_time']:.1f}s  |  {status}",
+                foreground="#147a3d" if correct else "#a61b1b",
+            )
+        else:
+            self.ground_truth_label.configure(text="Ground truth: no matching labeled query found.", foreground="#555555")
 
     def show_frame(self, seconds):
         if self.capture is None:
@@ -157,6 +174,7 @@ class EgoMemoryApp(tk.Tk):
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         image = Image.fromarray(frame)
         caption = self.caption_at(seconds)
+        self.live_caption.set(f"Live caption ({seconds:.1f}s): {caption or '[no speech in this instant]'}")
         if caption:
             draw = ImageDraw.Draw(image)
             lines = textwrap.wrap(caption, width=54)
@@ -175,6 +193,11 @@ class EgoMemoryApp(tk.Tk):
     def caption_at(self, seconds):
         matching = [segment.get("text", "").strip() for segment in self.transcript_segments if float(segment.get("start", 0)) <= seconds <= float(segment.get("end", 0))]
         return " ".join(part for part in matching if part)
+
+    def find_ground_truth(self, query):
+        query = query.lower().strip()
+        best = max(self.ground_truth, key=lambda item: SequenceMatcher(None, query, item["query"].lower()).ratio())
+        return best if SequenceMatcher(None, query, best["query"].lower()).ratio() >= 0.55 else None
 
     def toggle_playback(self):
         self.playing = not self.playing
